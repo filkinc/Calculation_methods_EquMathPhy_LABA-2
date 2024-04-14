@@ -104,6 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -128,6 +129,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Calculation_methods_EquMathPhy_LABA-2.cpp" />
+    <ClCompile Include="ConditionsHeatConductivity.cpp" />
+    <ClCompile Include="HeatConductionProblem.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ConditionsHeatConductivity.h" />
+    <ClInclude Include="HeatConductionProblem.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
