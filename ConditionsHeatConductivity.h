@@ -17,7 +17,8 @@ template <class T>
 using ThermCondCoefFunc = T(*)(T, T);
 
 template <class T>
-using ThermCondAFunc = T(*)(ThermCondCoefFunc<T>, T, T, T, T); // a(K(x, u), x[i - 1], x[i], u[i - 1], u[i]) 
+using ThermCondAFunc = T(*)(ThermCondCoefFunc<T>, T, T, T, T); // a(K(x, u), x[i - 1], x[i], u[i - 1], u[i])
+
 enum ThermCondBorderType {
     TEMP,
     HEAT_FLUX
@@ -53,9 +54,7 @@ struct ThermCondMethodParams {
 
 template<typename T>
 T K(T x, T u) {
-    ThermCondTaskParams<T> taskParams;
-
-    taskParams.L = 10;
+    //ƒанные дл€ нашего варианта
     T k_1 = 2,
         k_2 = 0.5,
         x_1 = 1 / 2,
@@ -65,65 +64,57 @@ T K(T x, T u) {
         return k_1;
     else if (x > x_1 && x < x_2)
         return k_1 * (x - x_2) / (x_1 - x_2) + k_2 * (x - x_1) / (x_2 - x_1);
-    else if (x >= x_2 && x <= taskParams.L)
+    else if (x >= x_2)
         return k_2;
-    else {
-        cout << "х выходит за границы L!";
-        return 0;
-    }
 }
 
 template<typename T>
 T quasiK(T x, T u) {
+    //ƒанные дл€ нашего варианта
     return 0.5 + 2 * pow(u, 2);
 }
 
 template<typename T>
-T a1(ThermCondCoefFunc<T>& K, T prev_x, T cur_x, T prev_y, T cur_y) {
+T a1(ThermCondCoefFunc<T> K, T prev_x, T cur_x, T prev_y, T cur_y) {
     return 0.5 * (K(cur_x, cur_y) + K(prev_x, prev_y));
 }
 
 template<typename T>
-T a2(ThermCondCoefFunc<T>& K, T prev_x, T cur_x, T prev_y, T cur_y) {
-    ThermCondTaskParams<T> taskParams;
-    ThermCondMethodParams<T> methodParams;
-
-    T N = methodParams.n;
-    T h = taskParams.L / N;
-    return K(cur_x - 0.5 * h, cur_y);
+T a2(ThermCondCoefFunc<T> K, T prev_x, T cur_x, T prev_y, T cur_y) {
+    return K(cur_x - 0.5 * (cur_x - prev_x), cur_y);
 }
 
 template<typename T>
-T a3(ThermCondCoefFunc<T>& K, T prev_x, T cur_x, T prev_y, T cur_y) {
+T a3(ThermCondCoefFunc<T> K, T prev_x, T cur_x, T prev_y, T cur_y) {
     return sqrt(K(cur_x, cur_y) * K(prev_x, prev_y));
 }
 
 template<class T>
-void mixedLinThermalCondScheme(const ThermCondTaskParams<double>& taskParams, const ThermCondMethodParams<double>& methodParams, double sigma, char* nameFile) {
+void mixedLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const ThermCondMethodParams<T>& methodParams, T sigma, const string& nameFile) {
     int N = methodParams.n;
     int M = methodParams.m;
 
-    double tau = taskParams.T / M;
-    double h = taskParams.L / N;
-    double gamma = h * h * taskParams.c * taskParams.rho / tau;
+    T tau = taskParams.T / M;
+    T h = taskParams.L / N;
+    T gamma = h * h * taskParams.c * taskParams.rho / tau;
 
-    vector<double> t(M + 1);
+    vector<T> t(M + 1);
     t[0] = 0;
-    for (int i = 1; i < M; ++i) {
+    for (int i = 1; i < M + 1; ++i) {
         t[i] = t[0] + i * tau;
     }
 
     auto leftCond = taskParams.leftCond;
     auto rightCond = taskParams.rightCond;
 
-    vector<double> a(N + 1);
-    vector<double> x(N + 1);
+    vector<T> a(N + 1);
+    vector<T> x(N + 1);
     x[0] = 0.;
     for (int i = 1; i < N + 1; ++i) {
         x[i] = x[0] + i * h;
     }
    
-    vector<double> prev_y(N + 1);
+    vector<T> prev_y(N + 1);
     for (int i = 0; i < N + 1; ++i) {
         prev_y[i] = taskParams.initCond(x[i]);
     }
@@ -132,10 +123,10 @@ void mixedLinThermalCondScheme(const ThermCondTaskParams<double>& taskParams, co
         a[i] = methodParams.a(taskParams.coefFunc, x[i - 1], x[i], prev_y[i - 1], prev_y[i]);
     }
 
-    vector<double> cur_y(N + 1);
-    vector<double> A(N), B(N), C(N), D(N);
+    vector<T> cur_y(N + 1);
+    vector<T> A(N), B(N), C(N), D(N);
 
-    for (int j = 0; j < M; ++j) {
+    for (int j = 0; j < M + 1; ++j) {
 
         for (int i = 1; i < N - 1; ++i) {
             A[i] = sigma * a[i];
@@ -171,8 +162,8 @@ void mixedLinThermalCondScheme(const ThermCondTaskParams<double>& taskParams, co
         }
 
         cur_y = right3diagLinSolve(A, B, C, D);
-        ofstream outFile;
-        outFile.open(nameFile);
+        ofstream outFile(nameFile);
+        /*outFile.open;*/
         for (int k = 0; k < N; ++k) {
             outFile << cur_y[k] << " ";
         }
@@ -186,15 +177,15 @@ void mixedLinThermalCondScheme(const ThermCondTaskParams<double>& taskParams, co
 }
 
 template<typename T>
-void explicitLinThermalCondScheme(const ThermCondTaskParams<double>& taskParams, const ThermCondMethodParams<double>& methodParams, char* nameFile) {
+void explicitLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const ThermCondMethodParams<T>& methodParams, const string& nameFile) {
     int N = methodParams.n;
     int M = methodParams.m;
 
-    double tau = taskParams.T / M;
-    double h = taskParams.L / N;
-    double gamma = h * h * taskParams.c * taskParams.rho / tau;
+    T tau = taskParams.T / M;
+    T h = taskParams.L / N;
+    T gamma = h * h * taskParams.c * taskParams.rho / tau;
 
-    vector<double> t(M + 1);
+    vector<T> t(M + 1);
     t[0] = 0;
     for (int i = 1; i < M; ++i) {
         t[i] = t[0] + i * tau;
@@ -203,14 +194,14 @@ void explicitLinThermalCondScheme(const ThermCondTaskParams<double>& taskParams,
     auto leftCond = taskParams.leftCond;
     auto rightCond = taskParams.rightCond;
 
-    vector<double> a(N + 1);
-    vector<double> x(N + 1);
+    vector<T> a(N + 1);
+    vector<T> x(N + 1);
     x[0] = 0.;
     for (int i = 1; i < N + 1; ++i) {
         x[i] = x[0] + i * h;
     }
     
-    vector<double> prev_y(N + 1);
+    vector<T> prev_y(N + 1);
     for (int i = 0; i < N + 1; ++i) {
         prev_y[i] = taskParams.initCond(x[i]);
     }
@@ -219,9 +210,9 @@ void explicitLinThermalCondScheme(const ThermCondTaskParams<double>& taskParams,
         a[i] = methodParams.a(taskParams.coefFunc, x[i - 1], x[i], prev_y[i - 1], prev_y[i]);
     }
 
-    vector<double> cur_y(N + 1);
+    vector<T> cur_y(N + 1);
      
-    for (int j = 0; j < M; ++j) {
+    for (int j = 0; j < M + 1; ++j) {
         for (int i = 1; i < N - 1; ++i) {
             cur_y[i] = a[i] / gamma * prev_y[i - 1] + (1 - a[i + 1] / gamma - a[i] / gamma) * prev_y[i] + a[i + 1] * prev_y[i + 1];
         }
@@ -240,8 +231,8 @@ void explicitLinThermalCondScheme(const ThermCondTaskParams<double>& taskParams,
             cur_y[N] = 2 * a[N] / gamma * prev_y[N - 1] + (1 - 2 * a[N] / gamma) * prev_y[N] + 2 * h / gamma * rightCond(t[j]);
         }
 
-        ofstream outFile;         
-        outFile.open(nameFile);
+        ofstream outFile(nameFile);
+        /*outFile.open;*/
             for (int k = 0; k < N; ++k) {
                 outFile << cur_y[k] << " ";
             }
@@ -260,15 +251,15 @@ void explicitLinThermalCondScheme(const ThermCondTaskParams<double>& taskParams,
 //}
 
 template<typename T>
-void quasiLinThermalCondScheme(const ThermCondTaskParams<double>& taskParams, const ThermCondMethodParams<double>& methodParams, int iterCount, char* nameFile) {
+void quasiLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const ThermCondMethodParams<T>& methodParams, int iterCount, const string& nameFile) {
     int N = methodParams.n;
     int M = methodParams.m;
 
-    double tau = taskParams.T / M;
-    double h = taskParams.L / N;
-    double gamma = h * h * taskParams.c * taskParams.rho / tau;
+    T tau = taskParams.T / M;
+    T h = taskParams.L / N;
+    T gamma = h * h * taskParams.c * taskParams.rho / tau;
 
-    vector<double> t(M + 1);
+    vector<T> t(M + 1);
     t[0] = 0;
     for (int i = 1; i < M; ++i) {
         t[i] = t[0] + i * tau;
@@ -277,14 +268,14 @@ void quasiLinThermalCondScheme(const ThermCondTaskParams<double>& taskParams, co
     auto leftCond = taskParams.leftCond;
     auto rightCond = taskParams.rightCond;
 
-    vector<double> a(N + 1);
-    vector<double> x(N + 1);
+    vector<T> a(N + 1);
+    vector<T> x(N + 1);
     x[0] = 0.;
     for (int i = 1; i < N + 1; ++i) {
         x[i] = x[0] + i * h;
     }
     
-    vector<double> prev_y(N + 1);
+    vector<T> prev_y(N + 1);
     for (int i = 0; i < N + 1; ++i) {
         prev_y[i] = taskParams.initCond(x[i]);
     }
@@ -292,11 +283,11 @@ void quasiLinThermalCondScheme(const ThermCondTaskParams<double>& taskParams, co
         a[i] = methodParams.a(taskParams.coefFunc, x[i - 1], x[i], prev_y[i - 1], prev_y[i]);
     }
 
-    vector<double> cur_y(N + 1);
-    vector<double> A(N), B(N), C(N), D(N);
+    vector<T> cur_y(N + 1);
+    vector<T> A(N), B(N), C(N), D(N);
 
-    ofstream outFile;
-    outFile.open(nameFile);
+    ofstream outFile(nameFile);
+    /*outFile.open;*/
     for (int i = 0; i < N + 1; ++i) {
         outFile << prev_y[i];
     }
