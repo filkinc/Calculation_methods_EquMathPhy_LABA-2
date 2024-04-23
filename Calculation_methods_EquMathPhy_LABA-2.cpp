@@ -31,26 +31,30 @@ ThermCondTaskParams<T> inputTaskParams(const string& nameFile) {
 
     if (leftBorderType == true) { // TEMP (1)
         taskParams.leftCond = [](T) {return 0.2;};
+        taskParams.leftBorderType = TEMP;
     }
     else if (leftBorderType == false) {
-        taskParams.rightCond = [](T t) { // FALSE (0)
+        taskParams.leftCond = [](T t) { // FALSE (0)
             T t0 = 5, Q = 500; //потом сделать ввод этого из файла
             if (t >= 0 && t < t0)
                 return Q;
             else
                 return 0.;
             };
+        taskParams.leftBorderType = HEAT_FLUX;
     }
 
-    if (rightBorderType == TEMP) {
-        taskParams.leftCond = [](T) {return 0.2; };
+    if (rightBorderType == true) {
+        taskParams.rightCond = [](T t) {return 0.2; };
+        taskParams.rightBorderType = TEMP;
     }
-    else if (rightBorderType == HEAT_FLUX) {
+    else if (rightBorderType == false) {
         taskParams.rightCond = [](T t) {
             T t0 = 5, Q = 500; //потом сделать ввод этого из файла
             if (t >= 0 && t < t0) return Q;
             else return 0.;
             };
+        taskParams.rightBorderType = HEAT_FLUX;
     }
 
     if (coefFuncType == true) {
@@ -95,8 +99,9 @@ int main()
     auto taskParams = inputTaskParams<double>(INPUT_TASK_PARAMS);
     auto methodParams = inputMethodParams<double>(INPUT_METHOD_PARAMS);
 
-    /*cout << taskParams.leftCond;*/
-    /*mixedLinThermalCondScheme<double>(taskParams, methodParams, 1, "output_file_test");*/
+    /*cout << taskParams.leftCond << endl;
+    cout << taskParams.rightCond;*/
+    mixedLinThermalCondScheme<double>(taskParams, methodParams, 1, "output_file_test");
 
     return 0;
 }

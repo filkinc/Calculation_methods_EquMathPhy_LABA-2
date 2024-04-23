@@ -1,4 +1,4 @@
-file_method_params.txt:
+file_task_params.txt:
 L			// cm
 T			// seconds
 c			
@@ -8,7 +8,7 @@ rightBorderType 	// true TEMP ; false HEAT_FLUX
 coefFuncType 		// true K ; false quasiK
 
 
-file_task_params.txt:
+file_method_params.txt:
 n
 m
 ThermCondAFuncType	// 1 - a1 ; 2 - a2 ; 3 - a3

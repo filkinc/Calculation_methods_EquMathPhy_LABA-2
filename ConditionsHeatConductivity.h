@@ -124,11 +124,18 @@ void mixedLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const T
     }
 
     vector<T> cur_y(N + 1);
-    vector<T> A(N), B(N), C(N), D(N);
+    vector<T> A(N + 1), B(N + 1), C(N + 1), D(N + 1);
 
-    for (int j = 0; j < M + 1; ++j) {
+    ofstream outFile;
+    outFile.open(nameFile);
+    for (int k = 0; k < N + 1; ++k) {
+        outFile << cur_y[k] << " ";
+    }
+    outFile << endl;
 
-        for (int i = 1; i < N - 1; ++i) {
+    for (int j = 0; j < M; ++j) {
+
+        for (int i = 1; i < N; ++i) {
             A[i] = sigma * a[i];
             B[i] = gamma + sigma * (a[i + 1] + a[i]);
             C[i] = sigma * a[i + 1];
@@ -162,18 +169,17 @@ void mixedLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const T
         }
 
         cur_y = right3diagLinSolve(A, B, C, D);
-        ofstream outFile(nameFile);
-        /*outFile.open;*/
-        for (int k = 0; k < N; ++k) {
+        
+        for (int k = 1; k < N; ++k) {
             outFile << cur_y[k] << " ";
         }
         outFile << endl;
-        outFile.close();
 
         for (int i = 0; i < N + 1; ++i) {
             prev_y[i] = cur_y[i];
         }
     }
+    outFile.close();
 }
 
 template<typename T>
