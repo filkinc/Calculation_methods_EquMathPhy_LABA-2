@@ -37,3 +37,34 @@ vector<T> right3diagLinSolve(const vector<T>& a, const vector<T>& b, const vecto
 
     return x;
 }
+
+template<class T>
+vector<T> diff(const vector<T>& a, const vector<T>& b) {
+    int n = min(a.size(), b.size());
+    vector<T> res(n);
+
+    for (int i = 0; i < n; ++i) {
+        res[i] = a[i] - b[i];
+    }
+
+    return res;
+}
+
+template <class T>
+T norm_2(const vector<T>& x) {
+    T xSum = 0;
+
+    for (int i = 0; i < x.size(); ++i) {
+        xSum += x[i] * x[i];
+    }
+    return sqrt(xSum);
+}
+
+//template<typename T>
+//T normaDiffTwoVec(vector<T>& prev_vec, vector<T>& cur_vec) {
+//    T sum = 0;
+//    for (int i = 0; i < prev_vec.size(); ++i) {
+//        sum += (cur_vec[i] - prev_vec[i]) * (cur_vec[i] - prev_vec[i]);
+//    }
+//    return sqrt(sum);
+//}

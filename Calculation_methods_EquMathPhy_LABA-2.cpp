@@ -9,8 +9,16 @@
 
 using namespace std;
 
-const string INPUT_TASK_PARAMS = "file_task_params.txt";
-const string INPUT_METHOD_PARAMS = "file_method_params.txt";
+// LINER
+const string INPUT_TASK_PARAMS = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\file_task_params.txt";
+const string INPUT_METHOD_PARAMS = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\file_method_params.txt";
+const string OUTPUT_FILE = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\output_file.txt";
+
+// QUAZILINER
+//const string INPUT_TASK_PARAMS = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\quasi_file_task_params.txt";
+//const string INPUT_METHOD_PARAMS = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\quasi_file_method_params.txt";
+//const string OUTPUT_FILE = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\quasi_output_file.txt";
+
 
 template<typename T>
 ThermCondTaskParams<T> inputTaskParams(const string& nameFile) {
@@ -18,8 +26,8 @@ ThermCondTaskParams<T> inputTaskParams(const string& nameFile) {
     T lenght, time, capacity, density, startCond;
     bool leftBorderType, rightBorderType, coefFuncType;
 
-    ifstream inFile;
-    inFile.open(nameFile);
+    ifstream inFile(nameFile);
+    /*inFile.open;*/
     inFile >> lenght >> time >> capacity >> density >> leftBorderType >> rightBorderType >> coefFuncType;
     inFile.close();
 
@@ -35,11 +43,8 @@ ThermCondTaskParams<T> inputTaskParams(const string& nameFile) {
     }
     else if (leftBorderType == false) {
         taskParams.leftCond = [](T t) { // FALSE (0)
-            T t0 = 5, Q = 500; //потом сделать ввод этого из файла
-            if (t >= 0 && t < t0)
-                return Q;
-            else
-                return 0.;
+            if (t >= 0 && t < 20) return 500.;
+            else return 0.;
             };
         taskParams.leftBorderType = HEAT_FLUX;
     }
@@ -50,8 +55,7 @@ ThermCondTaskParams<T> inputTaskParams(const string& nameFile) {
     }
     else if (rightBorderType == false) {
         taskParams.rightCond = [](T t) {
-            T t0 = 5, Q = 500; //потом сделать ввод этого из файла
-            if (t >= 0 && t < t0) return Q;
+            if (t >= 0 && t < 20) return 500.; // задание потока Q, температура которая выключается через t0 сек
             else return 0.;
             };
         taskParams.rightBorderType = HEAT_FLUX;
@@ -71,14 +75,18 @@ template<typename T>
 ThermCondMethodParams<T> inputMethodParams(const string& nameFile) {
     ThermCondMethodParams<T> methodParams;
     size_t n, m, ThermCondAFuncType;
+    T sigma;
+    int iterCount;
 
-    ifstream inFile;
-    inFile.open(nameFile);
-    inFile >> n >> m >> ThermCondAFuncType;
+    ifstream inFile(nameFile);
+    /*inFile.open;*/
+    inFile >> n >> m >> sigma >> ThermCondAFuncType >> iterCount;
     inFile.close();
 
     methodParams.n = n;
     methodParams.m = m;
+    methodParams.sigma = sigma;
+    methodParams.iterCount = iterCount;
 
     if (ThermCondAFuncType == 1) {
         methodParams.a = a1;
@@ -95,13 +103,19 @@ ThermCondMethodParams<T> inputMethodParams(const string& nameFile) {
 
 int main()
 {
-    /*auto taskParams = inputTaskParams<double>("file_task_params.txt");*/
     auto taskParams = inputTaskParams<double>(INPUT_TASK_PARAMS);
     auto methodParams = inputMethodParams<double>(INPUT_METHOD_PARAMS);
 
     /*cout << taskParams.leftCond << endl;
     cout << taskParams.rightCond;*/
-    mixedLinThermalCondScheme<double>(taskParams, methodParams, 1, "output_file_test");
+
+    // LINER
+    //mixedLinThermalCondScheme<double>(taskParams, methodParams, OUTPUT_FILE);
+
+    //QUAIZILINER
+    quasiLinThermalCondScheme<double>(taskParams, methodParams, OUTPUT_FILE);
+
+
 
     return 0;
 }
