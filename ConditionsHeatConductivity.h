@@ -46,10 +46,12 @@ struct ThermCondTaskParams {
 
 template<class Type>
 struct ThermCondMethodParams {
+    string newNameFile;
+    bool idFuncType;
     int n; /*число отрезков по х*/
     int m; /*число отрезков по u*/
-    int iterCount;
     Type sigma;
+    int iterCount;
 
     ThermCondAFunc<Type> a;
 };
@@ -68,6 +70,11 @@ T K(T x, T u) {
         return k_1 * (x - x_2) / (x_1 - x_2) + k_2 * (x - x_1) / (x_2 - x_1);
     else if (x >= x_2)
         return k_2;
+}
+
+template<typename T>
+T constK(T x, T u) {
+    return 1;
 }
 
 template<typename T>
@@ -135,7 +142,7 @@ void mixedLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const T
     vector<T> cur_y(N + 1);
     vector<T> A(N + 1), B(N + 1), C(N + 1), D(N + 1);
 
-    ofstream outFile(nameFile);
+    ofstream outFile(nameFile + methodParams.newNameFile);
 
     /*outFile.open;*/
     for (int k = 0; k < N + 1; ++k) { // законментил чтобы не выводились начальные условия
@@ -198,9 +205,11 @@ void mixedLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const T
             prev_y[i] = cur_y[i];
         }
     }
-
     outFile.close();
 
+    /*ofstream outFileParams(nameFile + methodParams.newNameFile.substr(0, methodParams.newNameFile.length() - 4) + "_task_params.txt");
+    outFileParams << taskParams.T << " " << taskParams.L;
+    outFileParams.close();*/
 }
 
 template<typename T>
@@ -239,7 +248,7 @@ void explicitLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, cons
 
     vector<T> cur_y(N + 1);
     
-    ofstream outFile(nameFile);
+    ofstream outFile(nameFile + methodParams.newNameFile);
 
     /*outFile.open;*/
 
@@ -312,7 +321,7 @@ void quasiLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const T
     vector<T> cur_y(N + 1);
     vector<T> A(N + 1), B(N + 1), C(N + 1), D(N + 1);
 
-    ofstream outFile(nameFile);
+    ofstream outFile(nameFile + methodParams.newNameFile);
     /*outFile.open;*/
 
     for (int i = 0; i < N + 1; ++i) { // законментил чтобы не выводились начальные условия
@@ -327,7 +336,6 @@ void quasiLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const T
 
         vector<T> prev_appr_y = prev_y;
 
-        // if (iterCount == 0) {
             while (true) {
                 for (int i = 1; i < N; ++i) {
                     A[i] = a[i];
@@ -381,54 +389,6 @@ void quasiLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const T
             }
 
             iterVec[j] = iter;
-        // }
-        /*
-        else {
-            while (iter < iterCount) {
-                for (int i = 1; i < N; ++i) {
-                    A[i] = a[i];
-                    B[i] = gamma + a[i + 1] + a[i];
-                    C[i] = a[i + 1];
-                    D[i] = gamma * prev_y[i];
-                }
-
-                if (taskParams.leftBorderType == TEMP) {
-                    A[0] = 0;
-                    B[0] = -1;
-                    C[0] = 0;
-                    D[0] = -leftCond(t[j + 1]);
-                }
-                else if (taskParams.leftBorderType == HEAT_FLUX) {
-                    A[0] = 0;
-                    B[0] = gamma + 2 * a[1];
-                    C[0] = 2 * a[1];
-                    D[0] = gamma * prev_y[0] - 2 * h * leftCond(t[j + 1]);
-                }
-
-                if (taskParams.rightBorderType == TEMP) {
-                    A[N] = 0;
-                    B[N] = -1;
-                    C[N] = 0;
-                    D[N] = -rightCond(t[j + 1]);
-                }
-                else if (taskParams.rightBorderType == HEAT_FLUX) {
-                    A[N] = 2 * a[N];
-                    B[N] = gamma + 2 * a[N];
-                    C[N] = 0;
-                    D[N] = gamma * prev_y[N] + 2 * h * rightCond(t[j + 1]);
-                }
-
-                cur_y = right3diagLinSolve(A, B, C, D);
-
-                for (int k = 1; k < N + 1; ++k) {
-                    a[k] = methodParams.a(taskParams.coefFunc, x[k - 1], x[k], cur_y[k - 1], cur_y[k]);
-                }
-
-                ++iter;
-            }
-        }
-        */
-        
         
         for (int k = 0; k < N + 1; ++k) {
             outFile << cur_y[k] << " ";
@@ -441,11 +401,15 @@ void quasiLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const T
     }
     outFile.close();
 
-    ofstream outFileIter(nameFile.substr(0, nameFile.length() - 4) + "_iter.txt");
+    ofstream outFileIter(nameFile + methodParams.newNameFile.substr(0, methodParams.newNameFile.length() - 4) + "_iter.txt");
     for (int i = 0; i < M; ++i) {
         outFileIter << iterVec[i] << " ";
     }
-    
+    outFileIter.close();
+
+    ofstream outFileParams(nameFile + methodParams.newNameFile.substr(0, methodParams.newNameFile.length() - 4) + "_task_params.txt");
+    outFileParams << taskParams.T << " " << taskParams.L;
+    outFileParams.close();
     
 }
 

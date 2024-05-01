@@ -9,10 +9,12 @@
 
 using namespace std;
 
+const double pi = acos(-1);
+
 // LINER
 const string INPUT_TASK_PARAMS = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\file_task_params.txt";
 const string INPUT_METHOD_PARAMS = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\file_method_params.txt";
-const string OUTPUT_FILE = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\output_file.txt";
+const string OUTPUT_FILE = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\Выходные данные\\";
 
 // QUAZILINER
 //const string INPUT_TASK_PARAMS = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\quasi_file_task_params.txt";
@@ -24,18 +26,25 @@ template<typename T>
 ThermCondTaskParams<T> inputTaskParams(const string& nameFile) {
     ThermCondTaskParams<T> taskParams; 
     T lenght, time, capacity, density, startCond;
-    bool leftBorderType, rightBorderType, coefFuncType;
+    bool leftBorderType, rightBorderType;
+    int  initCondType, coefFuncType;
 
     ifstream inFile(nameFile);
     /*inFile.open;*/
-    inFile >> lenght >> time >> capacity >> density >> leftBorderType >> rightBorderType >> coefFuncType;
+    inFile >> lenght >> time >> capacity >> density >> initCondType >> leftBorderType >> rightBorderType >> coefFuncType;
     inFile.close();
 
     taskParams.L = lenght;
     taskParams.T = time;
     taskParams.c = capacity;
     taskParams.rho = density;
-    taskParams.initCond = [](T) {return 0.2; };
+
+    if (initCondType == 1) {
+        taskParams.initCond = [](T) {return 0.2; };
+    }
+    else if (initCondType == 2) {
+        taskParams.initCond = [](T x) {return sin(pi * x); };
+    }
 
     if (leftBorderType == true) { // TEMP (1)
         taskParams.leftCond = [](T) {return 0.2;};
@@ -61,10 +70,13 @@ ThermCondTaskParams<T> inputTaskParams(const string& nameFile) {
         taskParams.rightBorderType = HEAT_FLUX;
     }
 
-    if (coefFuncType == true) {
+    if (coefFuncType == 1) {
         taskParams.coefFunc = K;
     }
-    else if (coefFuncType == false) {
+    else if (coefFuncType == 2) {
+        taskParams.coefFunc = constK;
+    }
+    else if (coefFuncType == 3) {
         taskParams.coefFunc = quasiK;
     }
 
@@ -77,12 +89,16 @@ ThermCondMethodParams<T> inputMethodParams(const string& nameFile) {
     size_t n, m, ThermCondAFuncType;
     T sigma;
     int iterCount;
+    bool idFunc;
+    string newNameFile;
 
     ifstream inFile(nameFile);
     /*inFile.open;*/
-    inFile >> n >> m >> sigma >> ThermCondAFuncType >> iterCount;
+    inFile >> newNameFile >> idFunc >> n >> m >> sigma >> ThermCondAFuncType >> iterCount;
     inFile.close();
 
+    methodParams.newNameFile = newNameFile;
+    methodParams.idFuncType = idFunc;
     methodParams.n = n;
     methodParams.m = m;
     methodParams.sigma = sigma;
@@ -101,6 +117,16 @@ ThermCondMethodParams<T> inputMethodParams(const string& nameFile) {
     return methodParams; 
  }
 
+template<typename T>
+void solveHeatPromblem(const ThermCondTaskParams<T>& taskParams, const ThermCondMethodParams<T>& methodParams, const string& nameFile) {
+    if (methodParams.idFuncType == true) {
+        mixedLinThermalCondScheme<T>(taskParams, methodParams, nameFile);
+    }
+    else {
+        quasiLinThermalCondScheme<T>(taskParams, methodParams, nameFile);
+    }
+ }
+
 int main()
 {
     auto taskParams = inputTaskParams<double>(INPUT_TASK_PARAMS);
@@ -108,14 +134,12 @@ int main()
 
     /*cout << taskParams.leftCond << endl;
     cout << taskParams.rightCond;*/
-
     // LINER
     //mixedLinThermalCondScheme<double>(taskParams, methodParams, OUTPUT_FILE);
-
     //QUAIZILINER
-    quasiLinThermalCondScheme<double>(taskParams, methodParams, OUTPUT_FILE);
+    //quasiLinThermalCondScheme<double>(taskParams, methodParams, OUTPUT_FILE);
 
-
+    solveHeatPromblem(taskParams, methodParams, OUTPUT_FILE);
 
     return 0;
 }
