@@ -14,7 +14,7 @@ const double pi = acos(-1);
 // LINER
 const string INPUT_TASK_PARAMS = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\file_task_params.txt";
 const string INPUT_METHOD_PARAMS = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\file_method_params.txt";
-const string OUTPUT_FILE = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\Выходные данные\\";
+const string OUTPUT_FILE = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\";
 
 // QUAZILINER
 //const string INPUT_TASK_PARAMS = "C:\\Users\\filki\\Documents\\Учеба в МГТУ\\6 семестр\\Численные методы МФ\\Лаба №2 ЧМ\\Calculation_methods_EquMathPhy_LABA-2\\quasi_file_task_params.txt";
@@ -26,11 +26,9 @@ template<typename T>
 ThermCondTaskParams<T> inputTaskParams(const string& nameFile) {
     ThermCondTaskParams<T> taskParams; 
     T lenght, time, capacity, density, startCond;
-    bool leftBorderType, rightBorderType;
-    int  initCondType, coefFuncType;
+    int  leftBorderType, rightBorderType, initCondType, coefFuncType;
 
     ifstream inFile(nameFile);
-    /*inFile.open;*/
     inFile >> lenght >> time >> capacity >> density >> initCondType >> leftBorderType >> rightBorderType >> coefFuncType;
     inFile.close();
 
@@ -39,6 +37,7 @@ ThermCondTaskParams<T> inputTaskParams(const string& nameFile) {
     taskParams.c = capacity;
     taskParams.rho = density;
 
+    //Выбор начальных условий 
     if (initCondType == 1) {
         taskParams.initCond = [](T) {return 0.2; };
     }
@@ -46,30 +45,56 @@ ThermCondTaskParams<T> inputTaskParams(const string& nameFile) {
         taskParams.initCond = [](T x) {return sin(pi * x); };
     }
 
-    if (leftBorderType == true) { // TEMP (1)
+    //Выбор граничных условий
+    //Слева
+    if (leftBorderType == 1) {
         taskParams.leftCond = [](T) {return 0.2;};
         taskParams.leftBorderType = TEMP;
     }
-    else if (leftBorderType == false) {
-        taskParams.leftCond = [](T t) { // FALSE (0)
-            if (t >= 0 && t < 20) return 500.;
+    else if (leftBorderType == 2) {
+        taskParams.leftCond = [](T) {return 0.; };
+        taskParams.leftBorderType = TEMP;
+    }
+    else if (leftBorderType == 3) {
+        taskParams.leftCond = [](T t) { 
+            if (t >= 0 && t < 20) return 500.; // задание потока Q, температура которая выключается через t0 сек
+            else return 0.;
+            };
+        taskParams.leftBorderType = HEAT_FLUX;
+    }
+    else if (leftBorderType == 4) {
+        taskParams.leftCond = [](T t) {
+            if (t >= 0 && t < 20) return 0.;
             else return 0.;
             };
         taskParams.leftBorderType = HEAT_FLUX;
     }
 
-    if (rightBorderType == true) {
+    //Справа
+    if (rightBorderType == 1) {
         taskParams.rightCond = [](T t) {return 0.2; };
         taskParams.rightBorderType = TEMP;
     }
-    else if (rightBorderType == false) {
+    else if (rightBorderType == 2) {
+        taskParams.rightCond = [](T) {return 0.; };
+        taskParams.rightBorderType = TEMP;
+    }
+    else if (rightBorderType == 3) {
         taskParams.rightCond = [](T t) {
             if (t >= 0 && t < 20) return 500.; // задание потока Q, температура которая выключается через t0 сек
             else return 0.;
             };
         taskParams.rightBorderType = HEAT_FLUX;
     }
+    else if (rightBorderType == 4) {
+        taskParams.rightCond = [](T t) {
+            if (t >= 0 && t < 20) return 0.;
+            else return 0.;
+            };
+        taskParams.rightBorderType = HEAT_FLUX;
+    }
 
+    //Выбор коэффициента теплопроводности
     if (coefFuncType == 1) {
         taskParams.coefFunc = K;
     }
@@ -88,12 +113,10 @@ ThermCondMethodParams<T> inputMethodParams(const string& nameFile) {
     ThermCondMethodParams<T> methodParams;
     size_t n, m, ThermCondAFuncType;
     T sigma;
-    int iterCount;
-    bool idFunc;
+    int iterCount, idFunc;
     string newNameFile;
 
     ifstream inFile(nameFile);
-    /*inFile.open;*/
     inFile >> newNameFile >> idFunc >> n >> m >> sigma >> ThermCondAFuncType >> iterCount;
     inFile.close();
 
@@ -119,10 +142,10 @@ ThermCondMethodParams<T> inputMethodParams(const string& nameFile) {
 
 template<typename T>
 void solveHeatPromblem(const ThermCondTaskParams<T>& taskParams, const ThermCondMethodParams<T>& methodParams, const string& nameFile) {
-    if (methodParams.idFuncType == true) {
+    if (methodParams.idFuncType == 1) {
         mixedLinThermalCondScheme<T>(taskParams, methodParams, nameFile);
     }
-    else {
+    else if (methodParams.idFuncType == 2) {
         quasiLinThermalCondScheme<T>(taskParams, methodParams, nameFile);
     }
  }
@@ -131,13 +154,6 @@ int main()
 {
     auto taskParams = inputTaskParams<double>(INPUT_TASK_PARAMS);
     auto methodParams = inputMethodParams<double>(INPUT_METHOD_PARAMS);
-
-    /*cout << taskParams.leftCond << endl;
-    cout << taskParams.rightCond;*/
-    // LINER
-    //mixedLinThermalCondScheme<double>(taskParams, methodParams, OUTPUT_FILE);
-    //QUAIZILINER
-    //quasiLinThermalCondScheme<double>(taskParams, methodParams, OUTPUT_FILE);
 
     solveHeatPromblem(taskParams, methodParams, OUTPUT_FILE);
 

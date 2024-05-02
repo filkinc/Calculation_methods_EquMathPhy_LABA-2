@@ -143,8 +143,17 @@ void mixedLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const T
     vector<T> A(N + 1), B(N + 1), C(N + 1), D(N + 1);
 
     ofstream outFile(nameFile + methodParams.newNameFile);
+    outFile.precision(8);
+
+    outFile << 0 << " ";
+    for (int i = 0; i < N + 1; ++i) {
+        outFile << x[i] << " ";
+    }
+    outFile << endl;
 
     /*outFile.open;*/
+    
+    outFile << t[0] << " ";
     for (int k = 0; k < N + 1; ++k) { // законментил чтобы не выводились начальные условия
         outFile << prev_y[k] << " ";
     }
@@ -195,6 +204,8 @@ void mixedLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const T
         }
 
         cur_y = right3diagLinSolve(A, B, C, D);
+
+        outFile << t[j + 1] << " ";
         
         for (int k = 0; k < N + 1; ++k) {
             outFile << cur_y[k] << " ";
@@ -412,5 +423,3 @@ void quasiLinThermalCondScheme(const ThermCondTaskParams<T>& taskParams, const T
     outFileParams.close();
     
 }
-
-//макросы почитать про них

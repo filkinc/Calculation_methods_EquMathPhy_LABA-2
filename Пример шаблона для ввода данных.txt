@@ -4,14 +4,14 @@ T			// seconds
 c			
 rho
 initCondType		// 1 - initCond = 0,2 ; 2 - initCond = sin(pi * x)
-leftBorderType 		// true TEMP ; false HEAT_FLUX
-rightBorderType 	// true TEMP ; false HEAT_FLUX
+leftBorderType 		// 1 - TEMP = 0,2 ; 2 - TEMP = 0 ; 3 - HEAT_FLUX = 500 ; 4 - HEAT_FLUX = 0 
+rightBorderType 	// 1 - TEMP = 0,2 ; 2 - TEMP = 0 ; 3 - HEAT_FLUX = 500 ; 4 - HEAT_FLUX = 0
 coefFuncType 		// 1 - K ; 2 - constK ; 3 - quasiK
 
 
 file_method_params.txt:
 newNameFile
-f-id			// true LINER ; fales QUAZILINER
+f-id			// 1 - LINER ; 2 - QUAZILINER
 n
 m
 sigma
